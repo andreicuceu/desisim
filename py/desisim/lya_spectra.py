@@ -202,7 +202,7 @@ def apply_lya_transmission(qso_wave,qso_flux,trans_wave,trans) :
 
     return output_flux
 
-def apply_metals_transmission(qso_wave,qso_flux,trans_wave,trans,metals) :
+def apply_metals_transmission(qso_wave,qso_flux,trans_wave,trans,metals,strengths=None) :
     '''
     Apply metal transmission to input flux, interpolating if needed.
     The input transmission should be only due to lya, if not has no meaning.
@@ -221,6 +221,7 @@ def apply_metals_transmission(qso_wave,qso_flux,trans_wave,trans,metals) :
         output_flux[nqso, nwave]
 
     '''
+    log = get_logger()
     if qso_flux.shape[0] != trans.shape[0] :
         raise(ValueError("not same number of qso {} {}".format(qso_flux.shape[0],trans.shape[0])))
 
@@ -233,6 +234,14 @@ def apply_metals_transmission(qso_wave,qso_flux,trans_wave,trans,metals) :
     w = trans>1.e-100
     tau[w] = -np.log(trans[w])
     tau[~w] = -np.log(1.e-100)
+
+    if strengths is not None:
+        if len(strengths) != len(metals):
+            raise Exception('List of metal strengths must match list of metals')
+
+        for name, value in zip(metals, strengths):
+            log.info(f"Overwriting strength of metal {name} with value {value}.")
+            absorber_IGM[name]['COEF'] = value
 
     try:
         mtrans = { m:np.exp(-absorber_IGM[m]['COEF']*tau) for m in metals }

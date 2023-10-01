@@ -113,6 +113,8 @@ def parse(options=None):
     parser.add_argument('--metals', type=str, default=None, required=False, help = "list of metals to get the\
         transmission from, if 'all' runs on all metals", nargs='*')
 
+    parser.add_argument('--metal-strengths', type=float, default=None, required=False, help="list of metal strengths", nargs='*')
+
     #parser.add_argument('--metals-from-file', action = 'store_true', help = "add metals from HDU in file")
     parser.add_argument('--metals-from-file',type=str,const='all',help = "list of metals,'SI1260,SI1207' etc, to get from HDUs in file. \
 Use 'all' or no argument for mock version < 7.3 or final metal runs. ",nargs='?')
@@ -147,7 +149,7 @@ Use 'all' or no argument for mock version < 7.3 or final metal runs. ",nargs='?'
     parser.add_argument('--nmax', type=int, default=None, help="Max number of QSO per input file, for debugging")
 
     parser.add_argument('--save-resolution',action='store_true', help="Save full resolution in spectra file. By default only one matrix is saved in the truth file.")
-    
+
     parser.add_argument('--dn_dzdm', type=str, default=None, choices=["lyacolore","saclay","ohio"], help="Applies a downsampling by redshift bin based on the raw mock used (lyacolore, saclay or ohio) in order to reproduce dn/dz of DESI's main survey. Additionally it randomly assigns a r-band magnitude that reproduces DESI's SV dn/dM. If None is chosen it uses the redshift distribution from the raw mock given and default  magnitude distribution from template generator (SIMQSO or QSO).")
     parser.add_argument('--source-contr-smoothing', type=float, default=10., \
         help="When this argument > 0 A, source electrons' contribution to the noise is smoothed " \
@@ -685,8 +687,9 @@ def simulate_one_healpix(ifilename,args,model,obsconditions,decam_and_wise_filte
         for m in args.metals: lstMetals += m+', '
         log.info("Apply metals: {}".format(lstMetals[:-2]))
 
-        tmp_qso_flux = apply_metals_transmission(tmp_qso_wave,tmp_qso_flux,
-                            trans_wave,transmission,args.metals)
+        tmp_qso_flux = apply_metals_transmission(
+            tmp_qso_wave, tmp_qso_flux, trans_wave, transmission, args.metals, args.metal_strengths)
+
     # Attenuate the spectra for extinction
     if not sfdmap is None:
         Rv=3.1   #set by default
